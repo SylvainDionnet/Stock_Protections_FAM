@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Stock Protections — FAM</title>
+<style>
+:root {
+  --primary:#1B434C; --accent:#4CAF7D; --accent-light:#e8f5ee;
+  --danger:#e05252; --danger-light:#fdeaea; --warning:#f0a500; --warning-light:#fff8e6;
+  --bg:#f0f4f5; --card:#fff; --text:#1a2e32; --text-muted:#6b8a8f;
+  --border:#d0e2e5; --shadow:0 2px 12px rgba(27,67,76,.10);
+  --radius:14px; --radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+.header{background:var(--primary);color:white;padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.header-left{display:flex;align-items:center;gap:10px}
+.header-title{font-size:1rem;font-weight:800}
+.header-sub{font-size:.7rem;opacity:.75}
+.btn-scan-hd{background:var(--accent);color:white;border:none;border-radius:9px;padding:7px 13px;font-size:.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px}
+
+.nav{background:var(--card);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 6px;position:sticky;top:57px;z-index:97}
+.nav::-webkit-scrollbar{display:none}
+.nav-btn{padding:11px 14px;border:none;background:none;cursor:pointer;font-size:.8rem;font-weight:600;color:var(--text-muted);border-bottom:3px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:4px;transition:color .2s,border-color .2s}
+.nav-btn.active{color:var(--primary);border-color:var(--primary)}
+
+.main{padding:14px;max-width:700px;margin:0 auto}
+.card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.card-title{font-size:.82rem;color:var(--text-muted);font-weight:600;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
+
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow);border:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.stat-icon{font-size:1.8rem}
+.stat-value{font-size:1.4rem;font-weight:800;color:var(--primary)}
+.stat-label{font-size:.72rem;color:var(--text-muted)}
+
+.stock-item{display:flex;align-items:center;gap:10px;padding:9px 7px;border-bottom:1px solid var(--border);cursor:pointer;border-radius:var(--radius-sm);transition:background .15s}
+.stock-item:last-child{border-bottom:none}
+.stock-item:hover{background:#f5f9fa}
+.stock-emoji{font-size:1.6rem;min-width:36px;text-align:center}
+.stock-info{flex:1}
+.stock-name{font-weight:700;font-size:.9rem}
+.stock-ref{font-size:.72rem;color:var(--text-muted)}
+.stock-qty{text-align:right}
+.stock-qty-num{font-size:1.2rem;font-weight:800}
+.stock-qty-label{font-size:.68rem;color:var(--text-muted)}
+
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:.68rem;font-weight:700;margin-top:2px}
+.badge-ok{background:var(--accent-light);color:#1e7a45}
+.badge-low{background:var(--warning-light);color:#a06800}
+.badge-critical{background:var(--danger-light);color:#c0392b}
+
+.progress-bar{height:4px;background:var(--border);border-radius:4px;margin-top:5px}
+.progress-fill{height:100%;border-radius:4px;transition:width .3s}
+
+.btn{border:none;border-radius:var(--radius-sm);padding:9px 16px;font-size:.85rem;font-weight:600;cursor:pointer;transition:opacity .15s;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--primary);color:white}
+.btn-accent{background:var(--accent);color:white}
+.btn-danger{background:var(--danger);color:white}
+.btn-outline{background:transparent;color:var(--primary);border:2px solid var(--primary)}
+.btn-sm{padding:5px 11px;font-size:.78rem}
+.btn-lg{padding:13px 22px;font-size:.95rem;border-radius:12px;width:100%;justify-content:center}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:4px}
+.form-input{width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.92rem;font-family:inherit;background:white;color:var(--text);transition:border-color .2s}
+.form-input:focus{outline:none;border-color:var(--primary)}
+.form-select{width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.92rem;font-family:inherit;background:white;color:var(--text);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231B434C' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.form-select:focus{outline:none;border-color:var(--primary)}
+
+.sortie-zone{background:var(--danger-light);border:2px solid var(--danger);border-radius:var(--radius);padding:13px 14px;margin-bottom:12px}
+.sortie-zone .form-label{color:#c0392b}
+
+.aile-tag{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:12px;font-size:.68rem;font-weight:700;margin:1px}
+.at-blanche{background:#f8f9fa;color:#6c757d;border:1px solid #ccc}
+.at-jaune{background:#fff9e6;color:#a06800}
+.at-rose{background:#fff0f5;color:#c0396b}
+.at-verte{background:#e8f5ee;color:#1e7a45}
+
+.scan-container{position:relative;width:100%;border-radius:var(--radius);overflow:hidden;background:#000;aspect-ratio:4/3;max-height:280px}
+#video{width:100%;height:100%;object-fit:cover;display:block}
+.scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scan-frame{width:60%;aspect-ratio:1;border:3px solid var(--accent);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);animation:scanPulse 2s ease-in-out infinite}
+.scan-line{position:absolute;left:20%;right:20%;height:2px;background:var(--accent);animation:scanLine 2s linear infinite}
+@keyframes scanPulse{0%,100%{opacity:1}50%{opacity:.6}}
+@keyframes scanLine{0%{top:25%}100%{top:75%}}
+.scan-result-box{background:var(--accent-light);border:2px solid var(--accent);border-radius:var(--radius-sm);padding:11px 14px;margin-top:10px;display:none}
+.scan-result-box.show{display:block}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border-radius:var(--radius) var(--radius) 0 0;padding:18px 18px 30px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;animation:slideUp .3s ease-out}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.modal-title{font-size:1.05rem;font-weight:800;color:var(--primary)}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-muted);padding:4px}
+
+.history-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.history-item:last-child{border-bottom:none}
+.history-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.history-info{flex:1}
+.history-title{font-size:.85rem;font-weight:600}
+.history-date{font-size:.7rem;color:var(--text-muted)}
+.history-qty{font-weight:800;font-size:.92rem}
+
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+.fab{position:fixed;bottom:22px;right:18px;width:54px;height:54px;border-radius:50%;background:var(--accent);color:white;border:none;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 16px rgba(76,175,125,.45);display:flex;align-items:center;justify-content:center;z-index:90;transition:transform .2s}
+.fab:hover{transform:scale(1.08)}
+.toast{position:fixed;bottom:86px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a2e32;color:white;padding:9px 18px;border-radius:24px;font-size:.85rem;font-weight:600;opacity:0;pointer-events:none;transition:all .3s;z-index:300;white-space:nowrap;max-width:90vw;text-overflow:ellipsis;overflow:hidden}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.resident-chip{display:inline-flex;align-items:center;gap:4px;background:#e8f0fe;color:#1a56a4;border-radius:20px;padding:2px 8px;font-size:.72rem;font-weight:600;margin:1px}
+.section-title{font-size:.95rem;font-weight:800;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.empty-state{text-align:center;padding:28px 14px;color:var(--text-muted)}
+.empty-state .ei{font-size:2.5rem;margin-bottom:8px}
+.tag{display:inline-block;padding:2px 7px;border-radius:6px;font-size:.7rem;font-weight:600}
+.tag-blue{background:#e0eaff;color:#1a4fa0}
+.tag-grey{background:#eee;color:#555}
+
+.sync-banner{background:linear-gradient(135deg,#1B434C,#2a6475);color:white;border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sync-code{font-family:monospace;font-size:1.3rem;font-weight:900;letter-spacing:4px;background:rgba(255,255,255,.15);padding:5px 12px;border-radius:8px}
+
+/* Grille export 3 colonnes */
+.export-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.export-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:12px}
+
+/* Bouton partage mis en valeur */
+.btn-share{background:linear-gradient(135deg,#1B434C,#2a7a8a);color:white;border:none;border-radius:var(--radius-sm);padding:13px 16px;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-bottom:9px;box-shadow:0 3px 10px rgba(27,67,76,.25)}
+.btn-email{background:linear-gradient(135deg,#c0392b,#e05252);color:white;border:none;border-radius:var(--radius-sm);padding:13px 16px;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-bottom:9px;box-shadow:0 3px 10px rgba(192,57,43,.25)}
+.btn-copy{background:linear-gradient(135deg,#6c757d,#8a9097);color:white;border:none;border-radius:var(--radius-sm);padding:13px 16px;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-bottom:9px}
+
+/* Zone copie JSON */
+.json-copy-zone{display:none;background:#f8f9fa;border:2px solid var(--border);border-radius:var(--radius-sm);padding:10px;margin-top:8px}
+.json-copy-zone textarea{width:100%;height:120px;font-family:monospace;font-size:.72rem;border:none;background:transparent;resize:none;color:var(--text)}
+
+#pdf-zone{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:white;z-index:9999;overflow:auto;padding:20px}
+.pdf-toolbar{position:sticky;top:0;background:white;padding:10px 0 14px;display:flex;gap:8px;border-bottom:1px solid #eee;margin-bottom:16px}
+
+@media(min-width:500px){.stats-grid{grid-template-columns:repeat(4,1fr)}}
+@media print{.pdf-toolbar,.fab,.toast,.modal-overlay,.header,.nav{display:none!important}.main{padding:0}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span style="font-size:1.5rem">🏥</span>
+    <div>
+      <div class="header-title">Stock Protections</div>
+      <div class="header-sub">Foyer d'Accueil Médicalisé</div>
+    </div>
+  </div>
+  <button class="btn-scan-hd" onclick="openTab('scan')">📷 Scanner</button>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="openTab('dashboard')" id="tab-dashboard">🏠 Tableau</button>
+  <button class="nav-btn" onclick="openTab('stock')" id="tab-stock">📦 Stocks</button>
+  <button class="nav-btn" onclick="openTab('mouvement')" id="tab-mouvement">↕️ Mouvement</button>
+  <button class="nav-btn" onclick="openTab('scan')" id="tab-scan">📷 Scan</button>
+  <button class="nav-btn" onclick="openTab('residents')" id="tab-residents">👥 Résidents</button>
+  <button class="nav-btn" onclick="openTab('historique')" id="tab-historique">📋 Historique</button>
+  <button class="nav-btn" onclick="openTab('synchro')" id="tab-synchro">🔄 Sync</button>
+</nav>
+
+<div class="main">
+
+<!-- DASHBOARD -->
+<div class="tab-content active" id="content-dashboard">
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="card"><div class="card-title">⚠️ Alertes stock</div><div id="alert-items-list"></div></div>
+  <div class="card"><div class="card-title">📊 État des stocks</div><div id="dashboard-stock-list"></div></div>
+  <div class="card"><div class="card-title">🕐 Derniers mouvements</div><div id="dashboard-history"></div></div>
+</div>
+
+<!-- STOCKS -->
+<div class="tab-content" id="content-stock">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div class="section-title">📦 Inventaire complet</div>
+    <button class="btn btn-primary btn-sm" onclick="openAddProduct()">+ Ajouter</button>
+  </div>
+  <div class="card" style="padding:9px 11px"><input class="form-input" type="search" placeholder="🔍 Rechercher…" oninput="filterStock(this.value)" style="margin-bottom:0"></div>
+  <div class="card"><div id="stock-list"></div></div>
+</div>
+
+<!-- MOUVEMENT -->
+<div class="tab-content" id="content-mouvement">
+  <div class="section-title">↕️ Enregistrer un mouvement</div>
+  <div class="card">
+    <div class="form-group">
+      <label class="form-label">Type de mouvement</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+        <button class="btn btn-accent" id="btn-entree" onclick="setMouvement('entree')" style="border:3px solid var(--accent)">⬇️ Entrée stock</button>
+        <button class="btn btn-outline" id="btn-sortie" onclick="setMouvement('sortie')">⬆️ Sortie / Distribution</button>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Article</label><select class="form-select" id="mv-produit"></select></div>
+    <div id="mv-sortie-zone" style="display:none">
+      <div class="sortie-zone">
+        <div class="form-group" style="margin-bottom:10px">
+          <label class="form-label">🏥 Lieu de vie destinataire</label>
+          <select class="form-select" id="mv-aile">
+            <option value="toutes">— Non spécifié —</option>
+            <option value="blanche">⬜ Aile Blanche</option>
+            <option value="jaune">🟨 Aile Jaune</option>
+            <option value="rose">🌸 Aile Rose</option>
+            <option value="verte">🟢 Aile Verte</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">👤 Résident (optionnel)</label>
+          <select class="form-select" id="mv-resident"><option value="">— Aucun résident spécifié —</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Quantité</label>
+      <div style="display:flex;gap:9px;align-items:center">
+        <button class="btn btn-outline btn-sm" onclick="adjustQty(-1)" style="font-size:1.2rem;padding:4px 13px">−</button>
+        <input class="form-input" type="number" id="mv-qty" value="1" min="1" style="text-align:center;font-size:1.2rem;font-weight:800;flex:1">
+        <button class="btn btn-outline btn-sm" onclick="adjustQty(1)" style="font-size:1.2rem;padding:4px 13px">+</button>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Note (optionnelle)</label><input class="form-input" type="text" id="mv-note" placeholder="Ex: Livraison fournisseur, change nuit…"></div>
+    <button class="btn btn-primary btn-lg" onclick="enregistrerMouvement()">✅ Enregistrer</button>
+  </div>
+</div>
+
+<!-- SCAN -->
+<div class="tab-content" id="content-scan">
+  <div class="section-title">📷 Scanner un code-barres</div>
+  <div class="card">
+    <div class="scan-container"><video id="video" autoplay muted playsinline></video><div class="scan-overlay"><div><div class="scan-frame"></div><div class="scan-line"></div></div></div></div>
+    <div style="margin-top:10px;display:flex;gap:7px">
+      <button class="btn btn-primary btn-lg" id="btn-cam" onclick="toggleCamera()" style="flex:1">📷 Activer la caméra</button>
+      <button class="btn btn-outline" id="btn-torch" onclick="toggleTorch()" title="Lampe torche" style="display:none;padding:9px 14px">🔦</button>
+    </div>
+    <div class="scan-result-box" id="scan-result-box">
+      <div style="font-weight:700;font-size:.88rem;color:var(--primary)">Code détecté :</div>
+      <div id="scan-code" style="font-family:monospace;font-size:1.05rem;margin:3px 0"></div>
+      <div id="scan-product-info" style="font-size:.82rem;color:var(--text-muted)"></div>
+    </div>
+  </div>
+  <div class="card" id="scan-action-card" style="display:none">
+    <div class="card-title">Action rapide</div>
+    <div id="scan-found-product" style="margin-bottom:10px"></div>
+    <div id="scan-sortie-zone" style="display:none;margin-bottom:10px">
+      <div class="sortie-zone" style="padding:10px 12px">
+        <label class="form-label" style="color:#c0392b">🏥 Lieu de vie destinataire</label>
+        <select class="form-select" id="scan-aile">
+          <option value="toutes">— Non spécifié —</option>
+          <option value="blanche">⬜ Aile Blanche</option>
+          <option value="jaune">🟨 Aile Jaune</option>
+          <option value="rose">🌸 Aile Rose</option>
+          <option value="verte">🟢 Aile Verte</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+      <button class="btn btn-accent" onclick="scanAction('entree')">⬇️ Entrée</button>
+      <button class="btn btn-danger" onclick="scanAction('sortie')">⬆️ Sortie</button>
+    </div>
+    <div style="margin-top:9px;display:flex;gap:9px;align-items:center">
+      <span style="font-size:.82rem">Qté :</span>
+      <button class="btn btn-outline btn-sm" onclick="adjustScanQty(-1)">−</button>
+      <input class="form-input" type="number" id="scan-qty" value="1" min="1" style="width:65px;text-align:center;font-weight:800">
+      <button class="btn btn-outline btn-sm" onclick="adjustScanQty(1)">+</button>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">📝 Saisie manuelle</div><div style="display:flex;gap:7px"><input class="form-input" type="text" id="manual-code" placeholder="Code-barres ou référence…" style="flex:1"><button class="btn btn-primary" onclick="manualSearch()">🔍</button></div></div>
+</div>
+
+<!-- RÉSIDENTS -->
+<div class="tab-content" id="content-residents">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div class="section-title">👥 Résidents</div>
+    <button class="btn btn-primary btn-sm" onclick="openAddResident()">+ Ajouter</button>
+  </div>
+  <div class="card" style="padding:9px 11px;margin-bottom:10px">
+    <select class="form-select" id="filter-aile-r" onchange="renderResidents()" style="margin-bottom:0">
+      <option value="">Toutes les ailes</option>
+      <option value="blanche">⬜ Aile Blanche</option>
+      <option value="jaune">🟨 Aile Jaune</option>
+      <option value="rose">🌸 Aile Rose</option>
+      <option value="verte">🟢 Aile Verte</option>
+    </select>
+  </div>
+  <div class="card" id="residents-list"></div>
+</div>
+
+<!-- HISTORIQUE -->
+<div class="tab-content" id="content-historique">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div class="section-title">📋 Historique</div>
+    <button class="btn btn-primary btn-sm" onclick="exportPDF('historique')">📄 PDF</button>
+  </div>
+  <div class="card" style="padding:9px 11px;margin-bottom:10px">
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <select class="form-select" id="filter-type" onchange="renderHistory()" style="flex:1;min-width:120px"><option value="">Tous types</option><option value="entree">Entrées</option><option value="sortie">Sorties</option></select>
+      <select class="form-select" id="filter-aile-h" onchange="renderHistory()" style="flex:1;min-width:120px">
+        <option value="">Toutes les ailes</option>
+        <option value="blanche">Aile Blanche</option><option value="jaune">Aile Jaune</option>
+        <option value="rose">Aile Rose</option><option value="verte">Aile Verte</option>
+      </select>
+      <select class="form-select" id="filter-produit" onchange="renderHistory()" style="flex:1;min-width:120px"></select>
+    </div>
+  </div>
+  <div class="card" id="history-list"></div>
+</div>
+
+<!-- SYNCHRONISATION -->
+<div class="tab-content" id="content-synchro">
+  <div class="section-title">🔄 Synchronisation multi-appareils</div>
+
+  <div class="sync-banner">
+    <div>
+      <div style="font-size:.78rem;opacity:.8;margin-bottom:4px">Identifiant de session</div>
+      <div class="sync-code" id="sync-code-display">——</div>
+      <div id="sync-status" style="font-size:.72rem;opacity:.8;margin-top:2px"></div>
+    </div>
+    <button class="btn btn-accent btn-sm" onclick="copierCode()">📋 Copier</button>
+  </div>
+
+  <!-- EXPORT -->
+  <div class="card">
+    <div class="card-title">📤 Exporter / Partager les données</div>
+    <p style="font-size:.83rem;color:var(--text-muted);margin-bottom:14px">Choisissez la méthode qui correspond à votre appareil.</p>
+
+    <!-- 1. Partage natif (iOS/Android) -->
+    <button class="btn-share" id="btn-share-natif" onclick="partagerNatif()">
+      📲 Partager (Bluetooth, WhatsApp, AirDrop…)
+    </button>
+
+    <!-- 2. Envoyer par e-mail -->
+    <button class="btn-email" onclick="envoyerEmail()">
+      ✉️ Envoyer par e-mail
+    </button>
+
+    <!-- 3. Copier dans le presse-papier -->
+    <button class="btn-copy" onclick="copierJSON()">
+      📋 Copier les données (presse-papier)
+    </button>
+
+    <!-- 4. PDF -->
+    <div style="margin-top:4px">
+      <div class="card-title" style="margin-bottom:8px">📄 Exports PDF</div>
+      <div class="export-grid">
+        <button class="btn btn-outline" onclick="exportPDF('inventaire')">📄 PDF Inventaire</button>
+        <button class="btn btn-outline" onclick="exportPDF('historique')">📄 PDF Historique</button>
+      </div>
+    </div>
+
+    <div id="export-status" style="font-size:.82rem;margin-top:8px"></div>
+
+    <!-- Zone affichage JSON si copie impossible -->
+    <div class="json-copy-zone" id="json-copy-zone">
+      <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);margin-bottom:5px">Données JSON (sélectionnez tout et copiez) :</div>
+      <textarea id="json-textarea" readonly onclick="this.select()"></textarea>
+      <button class="btn btn-primary btn-sm" style="margin-top:7px;width:100%" onclick="selectAll()">Tout sélectionner</button>
+    </div>
+  </div>
+
+  <!-- IMPORT -->
+  <div class="card">
+    <div class="card-title">📥 Importer des données</div>
+    <p style="font-size:.83rem;color:var(--text-muted);margin-bottom:10px">Chargez un fichier JSON reçu depuis un autre appareil, ou collez les données copiées.</p>
+    <input type="file" id="import-file" accept=".json,.txt" style="display:none" onchange="importerFichier(this)">
+    <button class="btn btn-accent" style="width:100%;justify-content:center;margin-bottom:9px" onclick="document.getElementById('import-file').click()">📂 Charger un fichier JSON</button>
+    <div style="margin-bottom:7px;font-size:.8rem;font-weight:600;color:var(--text-muted)">— ou coller directement les données —</div>
+    <textarea class="form-input" id="paste-zone" rows="4" placeholder="Collez ici les données JSON copiées depuis un autre appareil…" style="font-family:monospace;font-size:.75rem;resize:vertical"></textarea>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="importerColle()">✅ Importer les données collées</button>
+    <div id="import-result" style="margin-top:10px;font-size:.85rem"></div>
+  </div>
+
+  <!-- GUIDE -->
+  <div class="card">
+    <div class="card-title">ℹ️ Comment synchroniser ?</div>
+    <div style="font-size:.82rem;color:var(--text-muted);line-height:1.7">
+      <div style="margin-bottom:6px">1️⃣ <strong>Partager</strong> → choisissez e-mail, WhatsApp, Bluetooth…</div>
+      <div style="margin-bottom:6px">2️⃣ <strong>Recevoir</strong> le message sur l'autre appareil</div>
+      <div style="margin-bottom:6px">3️⃣ <strong>Copier</strong> le contenu JSON reçu</div>
+      <div style="margin-bottom:6px">4️⃣ <strong>Coller</strong> dans la zone Import → Importer</div>
+      <div style="padding:9px 12px;background:var(--warning-light);border-radius:8px;color:var(--text);margin-top:10px;border-left:3px solid var(--warning)">
+        💡 <strong>Via e-mail :</strong> le fichier JSON est joint automatiquement. Ouvrez-le sur l'autre appareil et collez son contenu dans la zone import.
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<button class="fab" onclick="openTab('mouvement')">+</button>
+<div class="toast" id="toast"></div>
+
+<!-- Modal produit -->
+<div class="modal-overlay" id="modal-product">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="modal-product-title">Ajouter un article</span><button class="modal-close" onclick="closeModal('modal-product')">✕</button></div>
+    <div class="form-group"><label class="form-label">Nom *</label><input class="form-input" type="text" id="p-nom" placeholder="Ex: Couche taille M"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+      <div class="form-group"><label class="form-label">Référence</label><input class="form-input" type="text" id="p-ref" placeholder="REF-001"></div>
+      <div class="form-group"><label class="form-label">Catégorie</label>
+        <select class="form-select" id="p-cat">
+          <option value="couche">🧷 Couche</option><option value="alese">🛏️ Alèse</option>
+          <option value="protection">🛡️ Protection pull</option><option value="creme">🧴 Crème/Soin</option><option value="autre">📦 Autre</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">
+      <div class="form-group"><label class="form-label">Qté initiale</label><input class="form-input" type="number" id="p-qty" value="0" min="0"></div>
+      <div class="form-group"><label class="form-label">Seuil alerte</label><input class="form-input" type="number" id="p-seuil" value="10" min="0"></div>
+      <div class="form-group"><label class="form-label">Stock max</label><input class="form-input" type="number" id="p-max" value="100" min="1"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Taille</label>
+      <select class="form-select" id="p-taille"><option value="">— Aucune —</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select>
+    </div>
+    <button class="btn btn-primary btn-lg" onclick="saveProduct()">💾 Enregistrer</button>
+  </div>
+</div>
+
+<!-- Modal résident -->
+<div class="modal-overlay" id="modal-resident">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Ajouter un résident</span><button class="modal-close" onclick="closeModal('modal-resident')">✕</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+      <div class="form-group"><label class="form-label">Prénom *</label><input class="form-input" type="text" id="r-prenom" placeholder="Prénom"></div>
+      <div class="form-group"><label class="form-label">Initiale nom</label><input class="form-input" type="text" id="r-nom" placeholder="D." maxlength="4"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Lieu de vie *</label>
+      <select class="form-select" id="r-aile">
+        <option value="blanche">⬜ Aile Blanche</option><option value="jaune">🟨 Aile Jaune</option>
+        <option value="rose">🌸 Aile Rose</option><option value="verte">🟢 Aile Verte</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+      <div class="form-group"><label class="form-label">Chambre</label><input class="form-input" type="text" id="r-chambre" placeholder="Ex: Chambre 12"></div>
+      <div class="form-group"><label class="form-label">Taille habituelle</label>
+        <select class="form-select" id="r-taille"><option value="">—</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-lg" onclick="saveResident()">💾 Enregistrer</button>
+  </div>
+</div>
+
+<!-- Modal détail produit -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="detail-title"></span><button class="modal-close" onclick="closeModal('modal-detail')">✕</button></div>
+    <div id="detail-content"></div>
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn btn-accent" onclick="quickAction('entree')">⬇️ Entrée</button>
+      <button class="btn btn-danger" onclick="quickAction('sortie')">⬆️ Sortie</button>
+      <button class="btn btn-outline btn-sm" onclick="editProduct()">✏️ Modifier</button>
+    </div>
+  </div>
+</div>
+
+<!-- Zone PDF -->
+<div id="pdf-zone">
+  <div class="pdf-toolbar">
+    <button onclick="window.print()" style="background:var(--primary);color:white;border:none;padding:9px 18px;border-radius:9px;font-size:.88rem;font-weight:700;cursor:pointer">🖨️ Imprimer / Enregistrer PDF</button>
+    <button onclick="document.getElementById('pdf-zone').style.display='none'" style="background:var(--danger);color:white;border:none;padding:9px 18px;border-radius:9px;font-size:.88rem;font-weight:700;cursor:pointer">✕ Fermer</button>
+  </div>
+  <div id="pdf-content"></div>
+</div>
+
+<script>
+const AILE_LABELS={toutes:'Toutes les ailes',blanche:'Aile Blanche',jaune:'Aile Jaune',rose:'Aile Rose',verte:'Aile Verte'};
+const AILE_COLORS={blanche:'#6c757d',jaune:'#a06800',rose:'#c0396b',verte:'#1e7a45',toutes:'#1B434C'};
+const AILE_BG={blanche:'#f8f9fa',jaune:'#fff9e6',rose:'#fff0f5',verte:'#e8f5ee',toutes:'#e8f0f4'};
+const AILE_EMOJI={blanche:'⬜',jaune:'🟨',rose:'🌸',verte:'🟢',toutes:'🏥'};
+const catEmoji={couche:'🧷',alese:'🛏️',protection:'🛡️',creme:'🧴',autre:'📦'};
+const catLabel={couche:'Couche',alese:'Alèse',protection:'Protection pull',creme:'Crème/Soin',autre:'Autre'};
+
+let produits=JSON.parse(localStorage.getItem('fam_produits')||'null')||[
+  {id:1,nom:'Couche taille M',ref:'COU-M-001',categorie:'couche',taille:'M',qty:45,seuil:20,max:100,barcode:'3700000001'},
+  {id:2,nom:'Couche taille L',ref:'COU-L-001',categorie:'couche',taille:'L',qty:12,seuil:20,max:100,barcode:'3700000002'},
+  {id:3,nom:'Couche taille XL',ref:'COU-XL-001',categorie:'couche',taille:'XL',qty:5,seuil:15,max:80,barcode:'3700000003'},
+  {id:4,nom:'Alèse 60x90',ref:'ALE-001',categorie:'alese',taille:'',qty:30,seuil:10,max:60,barcode:'3700000004'},
+  {id:5,nom:'Protection pull M',ref:'PRO-M-001',categorie:'protection',taille:'M',qty:8,seuil:10,max:50,barcode:'3700000005'},
+  {id:6,nom:'Crème change',ref:'CRE-001',categorie:'creme',taille:'',qty:15,seuil:5,max:30,barcode:'3700000006'},
+];
+let residents=JSON.parse(localStorage.getItem('fam_residents')||'null')||[
+  {id:1,prenom:'Marie',nom:'D.',chambre:'Chambre 1',taille:'M',aile:'blanche'},
+  {id:2,prenom:'Jean',nom:'P.',chambre:'Chambre 3',taille:'L',aile:'jaune'},
+  {id:3,prenom:'Suzanne',nom:'B.',chambre:'Chambre 5',taille:'XL',aile:'rose'},
+];
+let historique=JSON.parse(localStorage.getItem('fam_historique')||'[]');
+let nextProductId=(produits.length?Math.max(...produits.map(p=>p.id)):0)+1;
+let nextResidentId=(residents.length?Math.max(...residents.map(r=>r.id)):0)+1;
+let currentMouvement='entree';
+let currentDetailId=null;
+let scanProductId=null;
+let cameraActive=false;
+let cameraStream=null;
+let editingProductId=null;
+
+let syncCode=localStorage.getItem('fam_sync_code');
+if(!syncCode){syncCode=Math.random().toString(36).substring(2,8).toUpperCase();localStorage.setItem('fam_sync_code',syncCode);}
+
+function save(){
+  localStorage.setItem('fam_produits',JSON.stringify(produits));
+  localStorage.setItem('fam_residents',JSON.stringify(residents));
+  localStorage.setItem('fam_historique',JSON.stringify(historique));
+}
+
+// ======= GÉNÈRE LE JSON =======
+function getJSONData(){
+  return JSON.stringify({version:2,date:new Date().toISOString(),syncCode,produits,residents,historique},null,2);
+}
+function getFilename(){
+  return`fam-stock-${new Date().toISOString().slice(0,10)}.json`;
+}
+
+// ======= 1. PARTAGE NATIF (Web Share API) =======
+async function partagerNatif(){
+  const jsonStr=getJSONData();
+  const filename=getFilename();
+  const st=document.getElementById('export-status');
+
+  // Web Share API avec fichier (Android Chrome, iOS Safari)
+  if(navigator.share && navigator.canShare){
+    try{
+      const file=new File([jsonStr],filename,{type:'application/json'});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({title:'Stock FAM — Sauvegarde',text:'Données de stock du FAM',files:[file]});
+        showToast('✅ Données partagées !');
+        st.innerHTML='<span style="color:var(--accent)">✅ Partage effectué</span>';
+        return;
+      }
+    }catch(e){if(e.name!=='AbortError'){/* continue vers fallback */}}
+  }
+
+  // Partage texte seul (si le fichier n'est pas supporté)
+  if(navigator.share){
+    try{
+      await navigator.share({title:'Stock FAM — Sauvegarde',text:jsonStr});
+      showToast('✅ Données partagées !');
+      st.innerHTML='<span style="color:var(--accent)">✅ Partage effectué</span>';
+      return;
+    }catch(e){if(e.name==='AbortError')return;}
+  }
+
+  // Fallback : afficher la zone de copie
+  st.innerHTML='<span style="color:var(--warning)">⚠️ Partage non disponible sur ce navigateur — utilisez "Copier" ou "E-mail"</span>';
+  afficherZoneCopie(jsonStr);
+}
+
+// ======= 2. ENVOI PAR E-MAIL =======
+function envoyerEmail(){
+  const jsonStr=getJSONData();
+  const filename=getFilename();
+  const st=document.getElementById('export-status');
+
+  // Construire le lien mailto avec les données dans le corps
+  const sujet=encodeURIComponent(`Sauvegarde Stock FAM — ${new Date().toLocaleDateString('fr-FR')}`);
+  // Corps avec les données (limitées car les clients email coupent les longs mailto)
+  const corps=encodeURIComponent(`Bonjour,
+
+Veuillez trouver ci-dessous les données de sauvegarde du stock FAM.
+Copiez le contenu JSON dans la zone "Importer" de l'application.
+
+Fichier : ${filename}
+Date : ${new Date().toLocaleString('fr-FR')}
+Articles : ${produits.length} | Résidents : ${residents.length} | Mouvements : ${historique.length}
+
+--- DONNÉES JSON (copier tout ce qui suit) ---
+
+${jsonStr}
+
+--- FIN DES DONNÉES ---`);
+
+  // Essayer d'ouvrir le client mail
+  const mailtoLink=`mailto:?subject=${sujet}&body=${corps}`;
+
+  // Si le corps est trop long pour mailto, on affiche la zone de copie
+  if(mailtoLink.length>2000){
+    // Ouvrir le client mail avec juste les infos, données à copier séparément
+    const corpsShort=encodeURIComponent(`Sauvegarde Stock FAM — ${new Date().toLocaleDateString('fr-FR')}
+Articles: ${produits.length} | Résidents: ${residents.length} | Mouvements: ${historique.length}
+
+Les données JSON ont été copiées dans votre presse-papier.
+Collez-les dans le corps de cet e-mail avant d'envoyer.`);
+    // Copier automatiquement dans le presse-papier
+    copierDansPresseP(jsonStr,false);
+    window.open(`mailto:?subject=${sujet}&body=${corpsShort}`,'_self');
+    st.innerHTML='<span style="color:var(--accent)">✅ Client e-mail ouvert · Données copiées — collez-les dans l\'e-mail</span>';
+    afficherZoneCopie(jsonStr);
+  } else {
+    window.open(mailtoLink,'_self');
+    st.innerHTML='<span style="color:var(--accent)">✅ Client e-mail ouvert avec les données</span>';
+  }
+}
+
+// ======= 3. COPIER DANS LE PRESSE-PAPIER =======
+async function copierJSON(){
+  const jsonStr=getJSONData();
+  await copierDansPresseP(jsonStr,true);
+  afficherZoneCopie(jsonStr);
+}
+
+async function copierDansPresseP(texte,toast=true){
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(texte);
+      if(toast)showToast('📋 Données copiées dans le presse-papier !');
+      document.getElementById('export-status').innerHTML='<span style="color:var(--accent)">✅ Copié ! Collez dans un e-mail, message ou fichier texte.</span>';
+      return true;
+    }
+  }catch(e){}
+  // Fallback execCommand
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=texte;ta.style.cssText='position:fixed;top:-9999px;left:-9999px';
+    document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    if(toast)showToast('📋 Données copiées !');
+    return true;
+  }catch(e){
+    if(toast)showToast('⚠️ Copiez manuellement ci-dessous');
+    return false;
+  }
+}
+
+function afficherZoneCopie(jsonStr){
+  const zone=document.getElementById('json-copy-zone');
+  const ta=document.getElementById('json-textarea');
+  ta.value=jsonStr;
+  zone.style.display='block';
+  ta.select();
+}
+function selectAll(){document.getElementById('json-textarea').select();}
+
+// ======= IMPORT FICHIER =======
+function importerFichier(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>traiterImport(e.target.result);
+  reader.readAsText(file);
+  input.value='';
+}
+
+// ======= IMPORT COLLÉ =======
+function importerColle(){
+  const texte=document.getElementById('paste-zone').value.trim();
+  if(!texte){showToast('⚠️ Collez d\'abord les données JSON');return;}
+  traiterImport(texte);
+}
+
+function traiterImport(texte){
+  try{
+    const data=JSON.parse(texte);
+    if(!data.produits||!data.residents)throw new Error('Format invalide');
+    const ok=confirm(`Importer les données du ${new Date(data.date).toLocaleDateString('fr-FR')} ?\n\n${data.produits.length} articles · ${data.residents.length} résidents · ${data.historique?.length||0} mouvements\n\nAttention : les données actuelles seront remplacées.`);
+    if(!ok)return;
+    produits=data.produits;residents=data.residents;historique=data.historique||[];
+    nextProductId=(produits.length?Math.max(...produits.map(p=>p.id)):0)+1;
+    nextResidentId=(residents.length?Math.max(...residents.map(r=>r.id)):0)+1;
+    save();
+    document.getElementById('import-result').innerHTML=`<div style="color:var(--accent);font-weight:600;padding:8px;background:var(--accent-light);border-radius:7px">✅ Import réussi — ${produits.length} articles · ${residents.length} résidents · ${historique.length} mouvements</div>`;
+    document.getElementById('paste-zone').value='';
+    showToast('✅ Données importées avec succès');
+  }catch(err){
+    document.getElementById('import-result').innerHTML=`<div style="color:var(--danger);padding:8px;background:var(--danger-light);border-radius:7px">❌ Erreur : ${err.message}</div>`;
+  }
+}
+
+function aileTag(aile){
+  if(!aile||aile==='toutes'||aile==='entree')return'';
+  return`<span class="aile-tag at-${aile}">${AILE_EMOJI[aile]||''} ${AILE_LABELS[aile]||aile}</span>`;
+}
+
+// ======= TABS =======
+function openTab(name){
+  document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(e=>e.classList.remove('active'));
+  document.getElementById('content-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='dashboard')renderDashboard();
+  if(name==='stock')renderStock();
+  if(name==='historique')renderHistory();
+  if(name==='residents')renderResidents();
+  if(name==='mouvement')renderMouvementForm();
+  if(name==='synchro')renderSynchro();
+  if(name!=='scan'&&cameraActive)stopCamera();
+}
+
+// ======= DASHBOARD =======
+function renderDashboard(){
+  const pp=produits;
+  const total=pp.length,critical=pp.filter(p=>p.qty===0).length,low=pp.filter(p=>p.qty>0&&p.qty<=p.seuil).length,ok=pp.filter(p=>p.qty>p.seuil).length;
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-card"><span class="stat-icon">📦</span><div><div class="stat-value">${total}</div><div class="stat-label">Articles</div></div></div>
+    <div class="stat-card"><span class="stat-icon">✅</span><div><div class="stat-value" style="color:var(--accent)">${ok}</div><div class="stat-label">OK</div></div></div>
+    <div class="stat-card"><span class="stat-icon">⚠️</span><div><div class="stat-value" style="color:var(--warning)">${low}</div><div class="stat-label">Bas</div></div></div>
+    <div class="stat-card"><span class="stat-icon">🚨</span><div><div class="stat-value" style="color:var(--danger)">${critical}</div><div class="stat-label">Rupture</div></div></div>`;
+  const alertItems=pp.filter(p=>p.qty<=p.seuil);
+  document.getElementById('alert-items-list').innerHTML=alertItems.length?alertItems.map(p=>{
+    const isCritical=p.qty===0;
+    return`<div class="stock-item" onclick="openDetail(${p.id})"><span class="stock-emoji">${catEmoji[p.categorie]}</span>
+      <div class="stock-info"><div class="stock-name">${p.nom}</div><span class="badge ${isCritical?'badge-critical':'badge-low'}">${isCritical?'🚨 RUPTURE':'⚠️ Stock bas'}</span></div>
+      <div class="stock-qty"><div class="stock-qty-num" style="color:${isCritical?'var(--danger)':'var(--warning)'}">${p.qty}</div><div class="stock-qty-label">/ ${p.seuil} min</div></div></div>`;
+  }).join(''):'<div class="empty-state"><div class="ei">✅</div><p>Tous les stocks sont suffisants</p></div>';
+  document.getElementById('dashboard-stock-list').innerHTML=pp.map(p=>{
+    const pct=Math.min(100,Math.round((p.qty/p.max)*100));
+    const color=p.qty===0?'var(--danger)':p.qty<=p.seuil?'var(--warning)':'var(--accent)';
+    return`<div style="margin-bottom:9px;cursor:pointer" onclick="openDetail(${p.id})">
+      <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:2px">
+        <span>${catEmoji[p.categorie]} <strong>${p.nom}</strong>${p.taille?' <span class="tag tag-blue">'+p.taille+'</span>':''}</span>
+        <span style="font-weight:800;color:${color}">${p.qty}</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div></div>`;
+  }).join('');
+  const last5=[...historique].reverse().slice(0,5);
+  document.getElementById('dashboard-history').innerHTML=last5.length?last5.map(h=>historyItemHTML(h)).join(''):'<div class="empty-state"><div class="ei">📋</div><p>Aucun mouvement</p></div>';
+}
+
+function historyItemHTML(h){
+  const p=produits.find(x=>x.id===h.produitId);
+  const r=residents.find(x=>x.id===h.residentId);
+  const isE=h.type==='entree';
+  return`<div class="history-item">
+    <div class="history-dot" style="background:${isE?'var(--accent)':'var(--danger)'}"></div>
+    <div class="history-info">
+      <div class="history-title">${p?p.nom:'Article supprimé'} ${aileTag(h.aile)} ${r?'<span class="resident-chip">👤 '+r.prenom+'</span>':''}</div>
+      <div class="history-date">${formatDate(h.date)}${h.note?' · '+h.note:''}</div></div>
+    <div class="history-qty" style="color:${isE?'var(--accent)':'var(--danger)'}">${isE?'+':'-'}${h.qty}</div></div>`;
+}
+
+function formatDate(iso){
+  const d=new Date(iso),now=new Date(),diff=Math.floor((now-d)/60000);
+  if(diff<1)return'À l\'instant';if(diff<60)return`Il y a ${diff} min`;
+  if(diff<1440)return`Il y a ${Math.floor(diff/60)}h`;
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+// ======= STOCK =======
+function renderStock(query=''){
+  const q=query.toLowerCase();
+  let pp=produits;
+  if(q)pp=pp.filter(p=>p.nom.toLowerCase().includes(q)||(p.ref||'').toLowerCase().includes(q)||(p.taille||'').toLowerCase().includes(q));
+  const el=document.getElementById('stock-list');
+  if(!pp.length){el.innerHTML='<div class="empty-state"><div class="ei">🔍</div><p>Aucun article trouvé</p></div>';return;}
+  el.innerHTML=pp.map(p=>{
+    const st=p.qty===0?'badge-critical':p.qty<=p.seuil?'badge-low':'badge-ok';
+    const stTxt=p.qty===0?'🚨 Rupture':p.qty<=p.seuil?'⚠️ Bas':'✅ OK';
+    const pct=Math.min(100,Math.round((p.qty/p.max)*100));
+    const color=p.qty===0?'var(--danger)':p.qty<=p.seuil?'var(--warning)':'var(--accent)';
+    return`<div class="stock-item" onclick="openDetail(${p.id})">
+      <span class="stock-emoji">${catEmoji[p.categorie]}</span>
+      <div class="stock-info">
+        <div class="stock-name">${p.nom} ${p.taille?'<span class="tag tag-blue">'+p.taille+'</span>':''}</div>
+        <div class="stock-ref">${p.ref||''} · ${catLabel[p.categorie]}</div>
+        <div class="progress-bar" style="margin-top:5px"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
+        <span class="badge ${st}">${stTxt}</span></div>
+      <div class="stock-qty"><div class="stock-qty-num" style="color:${color}">${p.qty}</div><div class="stock-qty-label">/ ${p.max}</div></div></div>`;
+  }).join('');
+}
+function filterStock(v){renderStock(v)}
+
+// ======= DETAIL =======
+function openDetail(id){
+  const p=produits.find(x=>x.id===id);if(!p)return;
+  currentDetailId=id;
+  document.getElementById('detail-title').textContent=`${catEmoji[p.categorie]} ${p.nom}`;
+  const pct=Math.min(100,Math.round((p.qty/p.max)*100));
+  const color=p.qty===0?'var(--danger)':p.qty<=p.seuil?'var(--warning)':'var(--accent)';
+  const resHist=historique.filter(h=>h.produitId===id).reverse().slice(0,5);
+  document.getElementById('detail-content').innerHTML=`
+    <div style="text-align:center;padding:14px 0">
+      <div style="font-size:3.5rem">${catEmoji[p.categorie]}</div>
+      <div style="font-size:2.2rem;font-weight:900;color:${color};margin:6px 0">${p.qty}</div>
+      <div style="color:var(--text-muted);font-size:.82rem">unités en stock (max ${p.max})</div>
+      <div class="progress-bar" style="margin:9px auto;max-width:180px;height:7px"><div class="progress-fill" style="width:${pct}%;background:${color};height:100%"></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px">
+      <div class="card" style="margin:0;padding:9px;text-align:center"><div style="font-size:.7rem;color:var(--text-muted)">Référence</div><div style="font-weight:700">${p.ref||'—'}</div></div>
+      <div class="card" style="margin:0;padding:9px;text-align:center"><div style="font-size:.7rem;color:var(--text-muted)">Taille</div><div style="font-weight:700">${p.taille||'—'}</div></div>
+      <div class="card" style="margin:0;padding:9px;text-align:center"><div style="font-size:.7rem;color:var(--text-muted)">Seuil alerte</div><div style="font-weight:700;color:var(--warning)">${p.seuil}</div></div>
+      <div class="card" style="margin:0;padding:9px;text-align:center"><div style="font-size:.7rem;color:var(--text-muted)">Code-barres</div><div style="font-weight:700;font-size:.75rem;font-family:monospace">${p.barcode||'—'}</div></div>
+    </div>
+    ${resHist.length?'<div style="font-size:.78rem;font-weight:700;color:var(--text-muted);margin-bottom:7px">Derniers mouvements :</div>'+resHist.map(h=>historyItemHTML(h)).join(''):''}`;
+  openModal('modal-detail');
+}
+function quickAction(type){closeModal('modal-detail');setMouvement(type);document.getElementById('mv-produit').value=currentDetailId;openTab('mouvement')}
+function editProduct(){const p=produits.find(x=>x.id===currentDetailId);closeModal('modal-detail');openAddProduct(p)}
+
+// ======= PRODUIT =======
+function openAddProduct(p=null){
+  editingProductId=p?p.id:null;
+  // Réinitialiser le barcode en mode ajout
+  if(!p){document.getElementById('p-nom')&&(document.getElementById('p-nom').value='');}
+  document.getElementById('modal-product-title').textContent=p?'✏️ Modifier l\'article':'➕ Ajouter un article';
+  document.getElementById('p-nom').value=p?.nom||'';
+  document.getElementById('p-ref').value=p?.ref||'';
+  document.getElementById('p-cat').value=p?.categorie||'couche';
+  document.getElementById('p-qty').value=p?.qty||0;
+  document.getElementById('p-seuil').value=p?.seuil||10;
+  document.getElementById('p-max').value=p?.max||100;
+  document.getElementById('p-taille').value=p?.taille||'';
+  openModal('modal-product');
+}
+function saveProduct(){
+  const nom=document.getElementById('p-nom').value.trim();
+  if(!nom){showToast('⚠️ Le nom est obligatoire');return;}
+  const data={nom,ref:document.getElementById('p-ref').value.trim(),categorie:document.getElementById('p-cat').value,qty:parseInt(document.getElementById('p-qty').value)||0,seuil:parseInt(document.getElementById('p-seuil').value)||10,max:parseInt(document.getElementById('p-max').value)||100,taille:document.getElementById('p-taille').value,barcode:''};
+  if(editingProductId){const p=produits.find(x=>x.id===editingProductId);if(p){Object.assign(p,data);showToast('✅ Article modifié')}}
+  else{produits.push({id:nextProductId++,...data});showToast('✅ Article ajouté')}
+  save();closeModal('modal-product');renderStock();renderMouvementForm();editingProductId=null;
+}
+
+// ======= RÉSIDENTS =======
+function renderResidents(){
+  const el=document.getElementById('residents-list');
+  const aileF=document.getElementById('filter-aile-r')?.value||'';
+  let rr=aileF?residents.filter(r=>r.aile===aileF):residents;
+  if(!rr.length){el.innerHTML=`<div class="empty-state"><div class="ei">👥</div><p>Aucun résident${aileF?' dans '+AILE_LABELS[aileF]:''}</p></div>`;return;}
+  el.innerHTML=rr.map(r=>{
+    const mv=historique.filter(h=>h.residentId===r.id).length;
+    return`<div class="stock-item"><span class="stock-emoji">👤</span>
+      <div class="stock-info"><div class="stock-name">${r.prenom} ${r.nom}</div>
+        <div class="stock-ref">${r.chambre||''}</div>
+        ${aileTag(r.aile)} ${r.taille?'<span class="tag tag-blue">'+r.taille+'</span>':''}
+        <span class="tag tag-grey">${mv} distribution(s)</span></div>
+      <button class="btn btn-outline btn-sm" onclick="deleteResident(${r.id})">✕</button></div>`;
+  }).join('');
+}
+function openAddResident(){openModal('modal-resident')}
+function saveResident(){
+  const prenom=document.getElementById('r-prenom').value.trim();
+  if(!prenom){showToast('⚠️ Le prénom est obligatoire');return;}
+  residents.push({id:nextResidentId++,prenom,nom:document.getElementById('r-nom').value.trim(),aile:document.getElementById('r-aile').value,chambre:document.getElementById('r-chambre').value.trim(),taille:document.getElementById('r-taille').value});
+  save();closeModal('modal-resident');renderResidents();showToast('✅ Résident ajouté');
+}
+function deleteResident(id){if(!confirm('Supprimer ce résident ?'))return;residents=residents.filter(r=>r.id!==id);save();renderResidents();showToast('🗑️ Supprimé')}
+
+// ======= MOUVEMENT =======
+function renderMouvementForm(){
+  document.getElementById('mv-produit').innerHTML=produits.map(p=>`<option value="${p.id}">${catEmoji[p.categorie]} ${p.nom}${p.taille?' ('+p.taille+')':''} — ${p.qty} unité(s)</option>`).join('');
+  document.getElementById('mv-resident').innerHTML='<option value="">— Aucun résident spécifié —</option>'+residents.map(r=>`<option value="${r.id}">${r.prenom} ${r.nom} · ${AILE_LABELS[r.aile]||'—'}</option>`).join('');
+}
+function setMouvement(type){
+  currentMouvement=type;
+  ['entree','sortie'].forEach(t=>{
+    const btn=document.getElementById('btn-'+t);
+    btn.style.background=t===type?(t==='entree'?'var(--accent)':'var(--danger)'):'transparent';
+    btn.style.color=t===type?'white':'var(--primary)';
+    btn.style.border=t===type?`3px solid ${t==='entree'?'var(--accent)':'var(--danger)'}`:'2px solid var(--border)';
+  });
+  document.getElementById('mv-sortie-zone').style.display=type==='sortie'?'block':'none';
+  if(type==='sortie')document.getElementById('mv-aile').value='toutes';
+}
+function adjustQty(d){const el=document.getElementById('mv-qty');el.value=Math.max(1,(parseInt(el.value)||1)+d)}
+function enregistrerMouvement(){
+  const produitId=parseInt(document.getElementById('mv-produit').value);
+  const qty=parseInt(document.getElementById('mv-qty').value)||1;
+  const note=document.getElementById('mv-note').value.trim();
+  const p=produits.find(x=>x.id===produitId);if(!p)return;
+  if(currentMouvement==='sortie'&&p.qty<qty){showToast('⚠️ Stock insuffisant !');return;}
+  const aile=currentMouvement==='sortie'?document.getElementById('mv-aile').value:'';
+  const residentId=currentMouvement==='sortie'?(parseInt(document.getElementById('mv-resident').value)||null):null;
+  if(currentMouvement==='entree')p.qty+=qty;else p.qty-=qty;
+  historique.push({id:Date.now(),type:currentMouvement,produitId,qty,residentId,note,aile,date:new Date().toISOString()});
+  save();
+  document.getElementById('mv-qty').value=1;
+  document.getElementById('mv-note').value='';
+  renderMouvementForm();
+  const aileInfo=aile&&aile!=='toutes'?' → '+AILE_LABELS[aile]:'';
+  showToast(currentMouvement==='entree'?`✅ +${qty} enregistré`:`✅ -${qty} distribué${aileInfo}`);
+}
+
+// ======= HISTORIQUE =======
+function renderHistory(){
+  const typeF=document.getElementById('filter-type').value;
+  const aileF=document.getElementById('filter-aile-h').value;
+  const prodF=document.getElementById('filter-produit').value;
+  const selP=document.getElementById('filter-produit');
+  // Toujours reconstruire le filtre produit pour refléter les suppressions éventuelles
+  const prevVal=selP.value;
+  selP.innerHTML='<option value="">Tous les articles</option>'+produits.map(p=>`<option value="${p.id}">${p.nom}</option>`).join('');
+  selP.value=prevVal;
+  let filtered=[...historique].reverse();
+  if(typeF)filtered=filtered.filter(h=>h.type===typeF);
+  if(aileF)filtered=filtered.filter(h=>h.aile===aileF);
+  if(prodF)filtered=filtered.filter(h=>h.produitId===parseInt(prodF));
+  document.getElementById('history-list').innerHTML=filtered.length?filtered.map(h=>historyItemHTML(h)).join(''):'<div class="empty-state"><div class="ei">📋</div><p>Aucun mouvement</p></div>';
+}
+
+// ======= CAMÉRA + DÉCODAGE ZXING =======
+let barcodeDetector=null;
+let scanInterval=null;
+let torchOn=false;
+
+// Initialiser le détecteur (BarcodeDetector natif ou ZXing fallback)
+async function initDetector(){
+  if(barcodeDetector)return true;
+  // API native (Chrome Android, Safari iOS 17+)
+  if('BarcodeDetector' in window){
+    try{
+      const formats=await BarcodeDetector.getSupportedFormats();
+      barcodeDetector={native:true,detector:new BarcodeDetector({formats})};
+      return true;
+    }catch(e){}
+  }
+  return false;
+}
+
+async function toggleCamera(){
+  if(cameraActive){stopCamera();return;}
+  const ok=await initDetector();
+  if(!ok){
+    showToast('⚠️ Scan non supporté — utilisez la saisie manuelle');
+  }
+  try{
+    const constraints={video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}};
+    cameraStream=await navigator.mediaDevices.getUserMedia(constraints);
+    const video=document.getElementById('video');
+    video.srcObject=cameraStream;
+    await video.play();
+    document.getElementById('btn-cam').textContent='⏹️ Arrêter la caméra';
+    // Afficher bouton torche si disponible
+    const track=cameraStream.getVideoTracks()[0];
+    if(track&&track.getCapabilities&&track.getCapabilities().torch){
+      document.getElementById('btn-torch').style.display='block';
+    }
+    cameraActive=true;
+    document.getElementById('scan-result-box').classList.remove('show');
+    document.getElementById('scan-action-card').style.display='none';
+    if(ok)startScanLoop();
+    else showToast('📷 Caméra active — utilisez la saisie manuelle pour rechercher');
+  }catch(e){
+    const msg=e.name==='NotAllowedError'?'❌ Permission caméra refusée':'❌ Caméra non disponible';
+    showToast(msg);
+    document.getElementById('manual-code').focus();
+  }
+}
+
+function startScanLoop(){
+  if(scanInterval)clearInterval(scanInterval);
+  const video=document.getElementById('video');
+  scanInterval=setInterval(async()=>{
+    if(!cameraActive||!barcodeDetector||video.readyState<2)return;
+    try{
+      let codes=[];
+      if(barcodeDetector.native){
+        codes=await barcodeDetector.detector.detect(video);
+      }
+      if(codes.length>0){
+        const code=codes[0].rawValue;
+        stopCamera();
+        showScanResult(code);
+        // Vibration si disponible
+        if(navigator.vibrate)navigator.vibrate(100);
+      }
+    }catch(e){}
+  },300);
+}
+
+async function toggleTorch(){
+  if(!cameraStream)return;
+  const track=cameraStream.getVideoTracks()[0];
+  if(!track)return;
+  torchOn=!torchOn;
+  try{
+    await track.applyConstraints({advanced:[{torch:torchOn}]});
+    document.getElementById('btn-torch').textContent=torchOn?'💡':'🔦';
+  }catch(e){showToast('⚠️ Lampe torche non disponible');torchOn=false;}
+}
+
+function stopCamera(){
+  if(scanInterval){clearInterval(scanInterval);scanInterval=null;}
+  if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;}
+  document.getElementById('video').srcObject=null;
+  document.getElementById('btn-cam').textContent='📷 Activer la caméra';
+  document.getElementById('btn-torch').style.display='none';
+  torchOn=false;
+  cameraActive=false;
+}
+function findProductByBarcode(code){return produits.find(p=>p.barcode===code||p.ref===code||p.nom.toLowerCase().includes(code.toLowerCase()))}
+function showScanResult(code){
+  document.getElementById('scan-code').textContent=code;
+  const p=findProductByBarcode(code);
+  document.getElementById('scan-result-box').classList.add('show');
+  if(p){
+    scanProductId=p.id;
+    document.getElementById('scan-product-info').textContent=`✅ ${p.nom} — ${p.qty} en stock`;
+    document.getElementById('scan-found-product').innerHTML=`<div class="stock-item" style="border:0;padding:0"><span class="stock-emoji">${catEmoji[p.categorie]}</span><div class="stock-info"><div class="stock-name">${p.nom}</div><div class="stock-ref">${p.qty} en stock</div></div></div>`;
+    document.getElementById('scan-action-card').style.display='block';
+    document.getElementById('scan-sortie-zone').style.display='none';
+  }else{scanProductId=null;document.getElementById('scan-product-info').textContent='⚠️ Article non trouvé';document.getElementById('scan-action-card').style.display='none'}
+}
+function manualSearch(){const code=document.getElementById('manual-code').value.trim();if(code)showScanResult(code)}
+function adjustScanQty(d){const el=document.getElementById('scan-qty');el.value=Math.max(1,(parseInt(el.value)||1)+d)}
+function scanAction(type){
+  if(!scanProductId)return;
+  if(type==='sortie'){
+    const zone=document.getElementById('scan-sortie-zone');
+    if(zone.style.display==='none'){zone.style.display='block';return;}
+  }
+  const p=produits.find(x=>x.id===scanProductId);
+  const qty=parseInt(document.getElementById('scan-qty').value)||1;
+  if(type==='sortie'&&p.qty<qty){showToast('⚠️ Stock insuffisant !');return;}
+  const aile=type==='sortie'?document.getElementById('scan-aile').value:'';
+  if(type==='entree')p.qty+=qty;else p.qty-=qty;
+  historique.push({id:Date.now(),type,produitId:scanProductId,qty,residentId:null,note:'Via scan',aile,date:new Date().toISOString()});
+  save();
+  const aileInfo=aile&&aile!=='toutes'?' → '+AILE_LABELS[aile]:'';
+  showToast(type==='entree'?`✅ +${qty} ${p.nom}`:`✅ -${qty} ${p.nom}${aileInfo}`);
+  document.getElementById('scan-action-card').style.display='none';
+  document.getElementById('scan-result-box').classList.remove('show');
+  document.getElementById('scan-qty').value=1;
+  document.getElementById('scan-sortie-zone').style.display='none';
+}
+
+// ======= EXPORT PDF =======
+function exportPDF(type){
+  const date=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  let html='';
+  if(type==='inventaire'||type==='aile'){
+    html=`<div style="font-family:Arial,sans-serif">
+      <div style="background:#1B434C;color:white;padding:16px 20px;border-radius:10px;margin-bottom:20px">
+        <div style="font-size:1.3rem;font-weight:800">🏥 Stock Protections — FAM</div>
+        <div style="opacity:.8;font-size:.82rem">Inventaire complet · ${date}</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:20px">
+        <tr style="background:#f5f5f5"><th style="padding:7px 8px;text-align:left;border:1px solid #ddd">Article</th><th style="padding:7px;border:1px solid #ddd">Taille</th><th style="padding:7px;border:1px solid #ddd">Référence</th><th style="padding:7px;border:1px solid #ddd">Stock</th><th style="padding:7px;border:1px solid #ddd">Seuil</th><th style="padding:7px;border:1px solid #ddd">Statut</th></tr>
+        ${produits.map(p=>{const st=p.qty===0?'🚨 Rupture':p.qty<=p.seuil?'⚠️ Bas':'✅ OK';const bg=p.qty===0?'#fdeaea':p.qty<=p.seuil?'#fff8e6':'white';
+          return`<tr style="background:${bg}"><td style="padding:6px 8px;border:1px solid #ddd"><strong>${p.nom}</strong></td><td style="padding:6px 8px;border:1px solid #ddd;text-align:center">${p.taille||'—'}</td><td style="padding:6px 8px;border:1px solid #ddd">${p.ref||'—'}</td><td style="padding:6px 8px;border:1px solid #ddd;text-align:center;font-weight:800">${p.qty}</td><td style="padding:6px 8px;border:1px solid #ddd;text-align:center">${p.seuil}</td><td style="padding:6px 8px;border:1px solid #ddd;text-align:center">${st}</td></tr>`;}).join('')}
+      </table>
+      <div style="font-size:.72rem;color:#888;text-align:center">Généré le ${date} · FAM Stock Protections</div></div>`;
+  }else if(type==='historique'){
+    const aileF=document.getElementById('filter-aile-h')?.value||'';
+    const typeF=document.getElementById('filter-type')?.value||'';
+    let hh=[...historique].reverse();
+    if(aileF)hh=hh.filter(h=>h.aile===aileF);
+    if(typeF)hh=hh.filter(h=>h.type===typeF);
+    hh=hh.slice(0,200);
+    html=`<div style="font-family:Arial,sans-serif">
+      <div style="background:#1B434C;color:white;padding:16px 20px;border-radius:10px;margin-bottom:20px">
+        <div style="font-size:1.3rem;font-weight:800">🏥 Stock Protections — FAM</div>
+        <div style="opacity:.8;font-size:.82rem">Historique · ${date}${aileF?' · '+AILE_LABELS[aileF]:''}</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+        <tr style="background:#f5f5f5"><th style="padding:7px;text-align:left;border:1px solid #ddd">Date</th><th style="padding:7px;border:1px solid #ddd">Type</th><th style="padding:7px;border:1px solid #ddd">Article</th><th style="padding:7px;border:1px solid #ddd">Lieu de vie</th><th style="padding:7px;border:1px solid #ddd">Résident</th><th style="padding:7px;border:1px solid #ddd">Qté</th><th style="padding:7px;border:1px solid #ddd">Note</th></tr>
+        ${hh.map(h=>{const p=produits.find(x=>x.id===h.produitId);const r=residents.find(x=>x.id===h.residentId);const isE=h.type==='entree';
+          return`<tr style="background:${isE?'#f0fff8':'#fff8f8'}"><td style="padding:5px 7px;border:1px solid #ddd;white-space:nowrap">${new Date(h.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</td><td style="padding:5px 7px;border:1px solid #ddd;text-align:center">${isE?'⬇️':'⬆️'}</td><td style="padding:5px 7px;border:1px solid #ddd"><strong>${p?p.nom:'—'}</strong></td><td style="padding:5px 7px;border:1px solid #ddd">${h.aile&&h.aile!=='toutes'&&h.aile?AILE_LABELS[h.aile]||h.aile:'—'}</td><td style="padding:5px 7px;border:1px solid #ddd">${r?r.prenom+' '+r.nom:'—'}</td><td style="padding:5px 7px;border:1px solid #ddd;text-align:center;font-weight:800;color:${isE?'#1e7a45':'#c0392b'}">${isE?'+':'-'}${h.qty}</td><td style="padding:5px 7px;border:1px solid #ddd;font-size:.72rem">${h.note||''}</td></tr>`;}).join('')}
+      </table>
+      <div style="margin-top:14px;font-size:.7rem;color:#888;text-align:center">${hh.length} enregistrement(s) · Généré le ${date}</div></div>`;
+  }
+  document.getElementById('pdf-content').innerHTML=html;
+  document.getElementById('pdf-zone').style.display='block';
+  window.scrollTo(0,0);
+}
+
+// ======= SYNC UI =======
+function renderSynchro(){
+  document.getElementById('sync-code-display').textContent=syncCode;
+  const last=historique.length?formatDate(historique[historique.length-1].date):'jamais';
+  document.getElementById('sync-status').textContent=`${produits.length} articles · ${residents.length} résidents · Dernier mouvement : ${last}`;
+  // Vérifier si le partage natif est disponible
+  const btnShare=document.getElementById('btn-share-natif');
+  if(!navigator.share){
+    btnShare.style.opacity='.5';
+    btnShare.title='Non disponible sur ce navigateur';
+  }
+}
+function copierCode(){
+  if(navigator.clipboard){navigator.clipboard.writeText(syncCode).then(()=>showToast('📋 Identifiant copié !'));}
+  else showToast('Code : '+syncCode);
+}
+
+// ======= MODALS =======
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o){o.classList.remove('open');editingProductId=null;}}));
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+
+// ======= INIT =======
+renderDashboard();
+renderStock();
+</script>
+</body>
+</html>
